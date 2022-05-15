@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Blue Point Art Gallery</title>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta
+      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+      name="viewport"
+    />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap"
+      rel="stylesheet"
+    />
+
+    <link type="text/css" rel="stylesheet" href="styles/iframe.css" />
+  </head>
+
+  <body>
+    <!-- <a
+      href="#"
+      class="close-button"
+      ontouchstart="closeButton()"
+      onclick="closeButton()"
+    ></a>
+    <script>
+      const closeButton = () => {
+        window.parent.postMessage("closeInfo", "*");
+      };
+    </script>-->
+    <div class="text_iframe">
+      <p>
+        Wystawa
+        <b><i>Dialogi Vincenza — spojrzenia</i></b> jest częścią projektu
+        <i
+          ><b
+            >Twórczość Stanisława Vincenza u progu XXI wieku— w ujęciu
+            interdyscyplinarnym</b
+          ></i
+        ><br />
+        więcej o projekcie możesz przeczytać poniżej.<br />
+      </p>
+    </div>
+    <iframe
+      id="existing-iframe-example"
+      width="640"
+      height="360"
+      src="https://www.youtube.com/embed/M7lc1UVf-VE?enablejsapi=1"
+      frameborder="0"
+      style="border: solid 4px #37474f;"
+    ></iframe>
+
+    <script>
+      window.addEventListener("message", function (e) {
+        // Get the sent data
+        const data = e.data;
+        alert("vjbvnvkjn");
+        if (data) {
+          alert(data);
+        }
+
+        // If you encode the message in JSON before sending them,
+        // then decode here
+        // const decoded = JSON.parse(data);
+      });
+    </script>
+  </body>
+</html>

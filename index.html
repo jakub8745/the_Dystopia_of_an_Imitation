@@ -1,0 +1,984 @@
+<!--
+
+  Thanks to every contributor of threejs project. 
+  please visit: 
+  https://threejs.org/
+  https://github.com/mrdoob/three.js/releases
+  https://tweenjs.github.io/tween.js/
+
+-->
+
+<!--Upgaded to THREEJS r134, OrbitControls 09/2021, and huge changes in code for better responsing to change of windows size-->
+<!--I got rid with IFRAME and back to DIV. I used stopImeditePropagation() and others quite randomly ;) the clue is probably in abolute relative, I haven't got enought time for disent reaserch-->
+<!---->
+
+<!--POCZET REKTORÓW PUNO
+  Wersja zaimplementowana 9/4/2021 na https://culturelab.club/blue-point-art-gallery/NorwidSketches/#
+
+Upgrade:
+        - OrbitControls now it is oryginal OC 
+        - added: feedback after cliking, sound, light effect
+        - changed info about how to control gallery.
+        - introduce different orbitControls settings for mobile 
+          device recognition
+        - no clicking on mobile, you can zoom in/out
+        111121
+        - it can be dolly/zoom.  - new setting of orbit. 
+        - fix trap effect max after zoom in. 
+        - use  of {user data} in model, get rid of array, to scene.json model distanceToArtObject was added.
+        - properties of x, z was abonded. I use getWordDirection() of artObject to set tween (camera, target)
+-2021/12/09 finaly OrbitControls has been changed left button: rotate and pan forward/backward, right b: pan, scroll: dolly in/out !!!!!
+-2021/12/10 first attempt to decentralize hosting
+-202112/17  I use IFRAME because Orbit blocks touch events on mobiles. Use of iframe solved problem. 
+            TEXT in info iframe can be taken fron userData of artObject
+
+            20211224 - iframe "info widget " with html and counter down
+
+coming next:
+  
+ - problem of double touch when moving on mobiles
+
+        RZUT Z GÓRY NA SYTUACJĘ. GRZIE ZNAJDUJE SIĘ WIDZ I OBIEKTY.
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Blue Point Art Gallery</title>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <meta content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" name="viewport" />
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap" rel="stylesheet">
+  <link type="text/css" rel="stylesheet" href="styles/main.css" />
+
+</head>
+
+<body>
+  <section id="loading-screen">
+    <img src="/textures/BluePointGallery.gif" alt="LogoBluePointArtGallery" width="10%" />
+    <b><i> Jarek Solecki </i>THE DYSTOPIA OF AN IMITATION<b /><br>
+      <a href="https://bluepointart.uk/">
+        BLUE POINT ART GALLERY</a><br />Londyn 2022<br /></section>
+
+  <canvas id="c"></canvas>
+  <div class="exhibition-name">
+    <section>
+      <b><i> Jarek Solecki </i>THE DYSTOPIA OF AN IMITATION<b /><br />
+    </section>
+
+  </div>
+  <div class="button-container">
+    <div id="reloadButton" class="reload-button" display="block" ontouchstart="window.location.reload(false)"
+      onclick="window.location.reload(false)">
+      <a href="#"><img id="reload-icon" src="/textures/icons/reload.png"></a>
+    </div>
+    <div id="infoButton" class="open-info-button" display="block">
+      <a href="#"><img id="info-icon" src="/textures/icons/info.png"></a>
+    </div>
+
+    <div id="gizmoButton" class="gizmo-button" display="block">
+      <a href="#"><img id="gizmo-icon" src="/textures/icons/gizmo.png"></a>
+    </div>
+    <div id="leftButton" class="gizmo-button" display="block">
+      <a href="#"><img id="gizmo-icon" src="/textures/icons/leftButton.png"></a>
+    </div>
+    <div id="backwardButton" class="gizmo-button" display="block">
+      <a href="#"><img id="gizmo-icon" src="/textures/icons/backwardButton.png"></a>
+    </div>
+    <div id="forwardButton" class="gizmo-button" display="block">
+      <a href="#"><img id="gizmo-icon" src="/textures/icons/forwardButton.png"></a>
+    </div>
+    <div id="rightButton" class="gizmo-button" display="block">
+      <a href="#"><img id="gizmo-icon" src="/textures/icons/rightButton.png"></a>
+    </div>
+
+  </div>
+
+  <div id="widget" class="flex-container" style="display: none">
+
+    <a href="#" class="close-button" ontouchstart="closeButton()" onclick="closeButton()"></a>
+    <script>
+      const closeButton = () => {
+        document.getElementById('widget').style.display = 'none';
+      };
+    </script>
+
+    <div class="sections">
+      <iframe class="info_opis" src="project_info.html" frameborder="0" allowtransparency="true"
+        title="info_opis"></iframe>
+      <div class="flex-items">
+        <div id="nowyCounterDown"></div>
+      </div>
+
+      <div class="flex-items">
+        <iframe src="project_info.html" frameborder="0" allowtransparency="true" title="info"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="/build/tween.js"></script>
+  <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+  <script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js"
+				}
+			}
+		</script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    //import * as THREE from "https://link.eu1.storjshare.io/s/jullkb2wse7gzkwi2thwqxb6r6ra/rektorzy/build/three.min.js?download";
+    import { OrbitControls } from "./jsm/controls/OrbitControls.js"; //////////////////////
+    import { obrazyArray } from "/js/arrays.js";
+    //import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
+    //import { MTLLoader } from './jsm/loaders/MTLLoader.js';
+    //import { RGBELoader } from './jsm/loaders/RGBELoader.js';
+    // import { OBJLoader } from './jsm/loaders/OBJLoader.js';
+    //import { DRACOLoader } from './jsm/loaders/DRACOLoader.js'
+    import { TransformControls } from './jsm/controls/TransformControls.js';
+    const newPositon = new THREE.Vector3();
+    const pickPosition = new THREE.Vector2();
+    const distance = 0.2;
+    const front_vector = new THREE.Vector3();
+    const ignore1 = new THREE.Vector3();
+    const ignore2 = new THREE.Vector3();
+    const bezruch = true
+    const d = 0.1;
+    const isTweenCompleted = true;
+    let x, INTERSECTED, INTERSECTED0;
+    let clickTimer = null;
+    let whatTouch = 0;
+    let cameraEnd, targetEnd;
+    let control, orbit;
+
+    const getDeviceType = () => {
+      const ua = navigator.userAgent;
+      //console.log(ua)
+      if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+        return "tablet";
+      }
+      if (
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 0) ||
+        navigator.platform === "iPad"
+      ) {
+        return "tablet";
+      }
+      if (
+        /Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(
+          ua
+        )
+      ) {
+        return "mobile";
+      }
+      return "desktop";
+    };
+
+    const deviceType = getDeviceType();
+
+    const counterDownTimer = () => {
+      // Set the date we're counting down to
+      var countDownDate = new Date("Mar 16, 2022 18:00:00").getTime();
+
+      // Update the count down every 1 second
+      var x = setInterval(function () {
+        // Get today's date and time
+        var now = new Date().getTime();
+
+        // Find the distance between now and the count down date
+        var distanceCDT = countDownDate - now;
+
+        // Time calculations for days, hours, minutes and seconds
+        var days = Math.floor(distanceCDT / (1000 * 60 * 60 * 24));
+        var hours = Math.floor(
+          (distanceCDT % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        );
+        var minutes = Math.floor((distanceCDT % (1000 * 60 * 60)) / (1000 * 60));
+        var seconds = Math.floor((distanceCDT % (1000 * 60)) / 1000);
+
+        // Output the result in an element with id="demo"
+
+        //document.getElementById("nowyCounterDown").innerHTML = '<p><br>Przygotowujemy wystawę pt.: <b><i>Dialogi Vincenza — spojrzenia</i></b> <br>jest onaczęścią projektu:<i>Twórczość Stanisława Vincenza u progu XXI wieku— w ujęciu interdyscyplinarnym</i><br>Zapraszamy na wernisaż wystawy za:</p>' ""
+        document.getElementById("nowyCounterDown").innerHTML = '<p><b>Wernisaż wystawy odbędzie się już za:  ' + days + ' dni ' + hours + " godzin " + minutes + " minut i " + seconds + " sekund.";
+        // If the count down is over, write some text
+        if (distanceCDT < 0) {
+          clearInterval(x);
+          document.getElementById("nowyCounterDown").innerHTML = "EXPIRED";
+        }
+      }, 1000);
+    }
+
+    main();
+    //render()
+
+    function main() {
+      const canvas = document.querySelector("#c");
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+
+
+      //renderer.shadowMap.enabled = true;
+      //renderer.shadowMap.type = THREE.PCFSoftShadowMap
+
+      const raycaster = new THREE.Raycaster();
+      const scene = new THREE.Scene();
+      const cameraWorldDir = new THREE.Vector3();
+      //const cameraEnd, cameraStart, targetEnd, targetStart;
+
+      const camera = new THREE.PerspectiveCamera(
+        70, // fov
+        2, // aspect
+        0.01, // near
+        40// far
+      );
+
+      scene.background = new THREE.Color(0xf0f0f0);
+      scene.add(camera);
+
+      renderer.setPixelRatio(window.devicePixelRatio);
+
+
+
+
+      const openGestures = (iframeSrc, isNotWeb) => {
+        if (document.getElementsByTagName("iframe")[0].contentWindow !== undefined) {
+          document.getElementById("widget").style.display = "flex";
+
+          //console.log(document.getElementsByTagName("iframe")[0].src)
+          // console.log("iframeSrc", iframeSrc)
+          document.getElementsByTagName("iframe")[0].src = iframeSrc
+          document.getElementsByClassName("info_opis").style.display = 'none';
+        }
+        if (isNotWeb) { counterDownTimer(); }
+
+
+        switch (deviceType) {
+          case "desktop":
+            break;
+          case "mobile":
+            break;
+          case 'tablet':
+            break;
+          default:
+            break;
+        }
+      };
+
+      
+
+      /////////objcts - world///////////////////////////////////////////////////////
+      ///////////////////////////////////////////////////////////////////////////////
+
+      {
+        const loadingManager = new THREE.LoadingManager(() => {
+          const loadingScreen = document.getElementById("loading-screen");
+          loadingScreen.classList.add("fade-out");
+          // optional: remove loader from DOM via event listener
+          loadingScreen.addEventListener("transitionend", onTransitionEnd);
+        });
+
+        const loadero = new THREE.ObjectLoader(loadingManager);
+        //loadero.load("/models/Vermeer.json", function (objec) {
+        loadero.load("/models/Pitcher.json", function (objec) {
+          scene.copy(objec);
+          //console.log(scene)
+
+          scene.children.forEach((element) => {
+            if (element.type === "Mesh") {
+              element.geometry.computeBoundingBox();
+            }
+          })
+
+          const dzban = scene.getObjectByName(`dzban`);
+          //console.log('dzban.userData',dzban.userData)
+          dzban.receiveShadow = true
+          dzban.material.needsUpdate = true
+          //console.log('mesh.position', control._gizmo)
+          // control._gizmo.position.z = 1.5
+          control._gizmo.visible = true
+          control.setMode("rotate");
+          //console.log(control._gizmo.children[0].children[0].material.opacity)
+          //console.log(control._gizmo)
+
+          //const meshG = control._gizmo.children.forEach(changeGizmoLook)
+
+          //control._gizmo.children[0].children[0].material.visible = 0;//opacity = 0;
+         // control._gizmo.children[0].children[3].material.opacity = 0;
+         //control._gizmo.children[0].children[6].material.opacity = 0;;
+
+          control.attach(dzban);
+          scene.add(control);
+
+          renderer.shadowMap.enabled = true;
+          renderer.outputEncoding = THREE.sRGBEncoding;
+          renderer.physicallyCorrectLights = true
+          //renderer.shadowMap = THREE.PCFSoftShadowMap
+          renderer.toneMapping = THREE.LinearToneMapping
+
+         
+
+          //console.log(renderer)
+
+          const DirectionalLight = scene.getObjectByName(`DirectionalLight`);
+          DirectionalLight.shadow.mapSize.width = 1024; // default
+          DirectionalLight.shadow.mapSize.height = 1024;
+          //scene.add(new THREE.CameraHelper(DirectionalLight.shadow.camera));
+          /*
+          const d = 1;
+DirectionalLight.castShadow = true;
+DirectionalLight.shadow.camera.left = - d;
+DirectionalLight.shadow.camera.right = d;
+DirectionalLight.shadow.camera.top = d;
+DirectionalLight.shadow.camera.bottom = - d;
+const targetObject = new THREE.Object3D();
+targetObject.position.set(0,0,0)
+scene.add(targetObject);
+ renderer.toneMapping = THREE.CineonToneMapping
+
+DirectionalLight.target = targetObject;
+*/
+
+
+
+
+
+
+          // const element = scene.getObjectByName('PointLight');
+          //if (element){}
+          //element.visible=false
+          //element.castShadow = true;
+          //element.shadow.radius = 20;
+          // default
+          //element.shadow.camera.near = 0.5; // default
+          // element.shadow.camera.far = 1000;
+          // scene.getObjectByName('DirectionalLight').visible = false;
+          //const AmbientLight = scene.getObjectByName('AmbientLight');
+          //AmbientLight.intensity  =  1
+
+
+          const floor = scene.getObjectByName('Floor');
+          floor.material.receiveShadow = true
+          //floor.material.castShadow = true
+          let loader = new THREE.TextureLoader();
+          loader.load("/textures/floorTexture.jpg", function (texture) {
+
+            floor.material.map = texture;
+            floor.material.map.wrapS = THREE.RepeatWrapping;
+            floor.material.map.wrapT = THREE.RepeatWrapping;
+            floor.material.map.repeat.set(40, 40);
+
+            //floor.material.emissive.setHex(0x000000);
+            floor.material.needsUpdate = true;
+
+          });
+          /*
+        loader.load("/textures/concreteBump.jpg", function (texture) {
+        element.material.bumpMap = texture;
+        element.material.bumpScale = 0.05;
+        element.material.bumpMap.wrapS = THREE.RepeatWrapping;
+        element.material.bumpMap.wrapT = THREE.RepeatWrapping;
+        element.material.bumpMap.repeat.set(6, 4);
+        element.material.needsUpdate = true;
+        });
+        */
+
+
+
+        })
+      }
+      ////////////////////////////////////////
+      // CONTROLS
+
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+
+      control = new TransformControls(camera, renderer.domElement);
+      // console.log('gizmmmm', control._gizmo.position)
+
+
+      switch (deviceType) {
+        case "desktop":
+          //openGestures();
+          controls.mouseButtons = {
+            RIGHT: THREE.MOUSE.PAN,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            LEFT: THREE.MOUSE.ROTATE
+          };
+          controls.listenToKeyEvents(window);
+          controls.keyPanSpeed = 20;
+
+          controls.screenSpacePanning = false;
+          controls.minDistance = 0.52;
+          controls.maxDistance = 2.5;
+          controls.enablePan = true;
+          //controls.panSpeed = 5;
+          //controls.rotateSpeed = 0.2;
+          controls.enableZoom = true;
+          controls.zoomSpeed = 1;
+          //controls.minZoom = 1;
+          //controls.minZoom = 1;
+          controls.panSpeed = 4;
+          controls.rotateSpeed = 0.4; // controls.panSpeed / 20;
+          break;
+        case "mobile":
+          //3alert('mobile')
+          controls.touches = {
+            ONE: THREE.TOUCH.ROTATE,
+            TWO: THREE.TOUCH.DOLLY_PAN
+          };
+          controls.screenSpacePanning = false;
+          controls.minDistance = 0;
+          controls.maxDistance = 2.5;
+          controls.panSpeed = 2;
+          controls.rotateSpeed = 1;
+          controls.enableZoom = true;
+          controls.zoomSpeed = 1.5;
+          break;
+        case "tablet":
+          //alert('tablet')
+          controls.touches = {
+            ONE: THREE.TOUCH.ROTATE,
+            TWO: THREE.TOUCH.DOLLY_PAN
+          };
+          controls.screenSpacePanning = false;
+          controls.minDistance = 0;
+          controls.maxDistance = 2.5;
+          controls.panSpeed = 2;
+          controls.rotateSpeed = 1;
+          controls.enableZoom = true;
+          controls.zoomSpeed = 1.5;
+      }
+
+      controls.maxPolarAngle = Math.PI / 2; // Limit angle of visibility
+      controls.minPolarAngle = Math.PI / 2;
+      controls.target.copy(new THREE.Vector3(-8.453, 7, -0.345));
+      controls.object.position.copy(new THREE.Vector3(-10.087, 7, 0));
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.autoRotate = false;
+      controls.autoRotateSpeed = 0.02;
+      //controls.update();
+
+      ////////////////////  Camera Bouncing Sphere
+      const geometry = new THREE.SphereBufferGeometry(0.15, 8, 8); //0.5
+      const material = new THREE.MeshBasicMaterial({
+        color: 0x010101,
+        wireframe: true
+      });
+      const plane = new THREE.Mesh(geometry, material);
+      plane.rotation.x = Math.PI / 2;
+      //plane.position.copy(computeSphereCenter());
+      plane.position.copy(camera.position);
+      //plane.position.y = 0.1;
+      plane.material.visible = false;
+      plane.name = "BouncingSphere";
+      plane.geometry.computeBoundingSphere();
+      scene.add(plane);
+
+      /////////////////// Target Bouncing Sphere
+
+      const Tgeometry = new THREE.SphereBufferGeometry(0.11, 8, 8); //0.21
+      const Tmaterial = new THREE.MeshBasicMaterial({
+        color: 0x011000,
+        wireframe: true
+      });
+      const Tplane = new THREE.Mesh(Tgeometry, Tmaterial);
+      Tplane.rotation.x = Math.PI / 2;
+      Tplane.position.copy(controls.target);
+      //Tplane.position.y = 0.1;
+      Tplane.material.visible = false;
+      Tplane.name = "TargetBouncingSphere";
+      Tplane.geometry.computeBoundingSphere();
+      scene.add(Tplane);
+      /////////////////////////////////////
+      /*
+        camera.matrix.extractBasis(ignore1, ignore2, front_vector);
+        //put the camera at a negative distance from the object.
+        camera.position.copy(controls.target);
+        camera.position.addScaledVector(front_vector, distance);
+    */
+      const setPickPosition = (event) => {
+        let pos = getCanvasRelativePosition(event);
+        pickPosition.x = (pos.x / renderer.domElement.clientWidth) * 2 - 1;
+        pickPosition.y = (pos.y / renderer.domElement.clientHeight) * -2 + 1; // note we flip Y
+
+
+        touchStart();
+
+
+      };
+
+      const clearPickPosition = () => {
+        pickPosition.x = -100000;
+        pickPosition.y = -100000;
+      };
+
+      // event listeners
+      window.addEventListener("message", (event) => {
+        if (event.origin !== "https://e6pnh.csb.app")
+          return;
+        // console.log("originevent.", event.data)
+
+        if (event.data == "closeInfo") {
+          // console.log("trzeba zamknąć to okno")
+
+          document.getElementById("widget").style.display = "none";
+
+          //const frame = document.getElementById("widget");
+          //frame.parentNode.removeChild(frame);
+        }
+        // ...
+      }, false);
+      document
+        .getElementById("infoButton")
+        .addEventListener("pointerdown", function () {
+          openGestures("project_info.html", false)
+          //this.style.backgroundColor = "red";
+        });
+      document
+        .getElementById("infoButton")
+        .addEventListener("touchstart", openGestures);
+
+
+
+      //console.log(document.getElementById("gizmoButton"))
+      document.getElementById("gizmoButton").addEventListener("click", function () { control._gizmo.visible = !control._gizmo.visible })
+
+      /*
+document
+        .getElementById("infoButton")
+        .addEventListener("click", openGestures);
+      document
+        .getElementById("infoButton")
+        .addEventListener("touchstart", openGestures);
+
+
+
+            const openGesturesX = () => {
+              //console.log('nowe współrzędne')
+              //controls.target.copy(new THREE.Vector3(0,1.4,0));
+              // controls.object.position.copy(new THREE.Vector3(1,1.4,1.5));
+            };
+            */
+      //window.addEventListener("load", openGestures);
+      window.addEventListener("click", setPickPosition);
+      window.addEventListener("mouseout", clearPickPosition);
+      window.addEventListener("mouseleave", clearPickPosition);
+      window.addEventListener(
+        "touchstart",
+        (event) => {
+          event.preventDefault();
+          setPickPosition(event.touches[0]);
+        },
+        { passive: false }
+      );
+
+      window.addEventListener("touchmove", (event) => {
+        setPickPosition(event.touches[0]);
+      });
+
+      window.addEventListener("touchend", clearPickPosition);
+
+
+      controls.addEventListener("end", function () {
+        //let bezruch = true
+        if (
+          document.getElementById("widget").style.display !== "none" &&
+          isTweenCompleted === true
+        ) {
+          window.TimeoutID = setTimeout(() => {
+            document.getElementById("widget").style.display = "none";
+          }, 1000);
+        }
+      });
+
+
+      ////////////
+      //control.addEventListener("change", function () { console.log(control.getRaycaster()) });
+
+      control.addEventListener("dragging-changed", function (event) {
+        controls.enabled = !event.value;
+      });
+      ///////
+
+      window.addEventListener("keydown", function (event) {
+        console.log("event", event)
+        switch (event.keyCode) {
+          case 77: // M -- move
+            control.setMode("translate");
+            break;
+
+          case 82: // R --- rotatemrr
+            control.setMode("rotate");
+            break;
+
+          case 88: // X
+            control.showX = !control.showX;
+            break;
+
+          case 89: // Y
+            control.showY = !control.showY;
+            break;
+
+          case 90: // Z
+            control.showZ = !control.showZ;
+            break;
+
+          case 32: // Spacebar
+            //control.enabled = !control.enabled;
+            control._gizmo.visible = !control._gizmo.visible
+            break;
+
+          case 27: // Esc
+            control.reset();
+            break;
+        }
+      });
+
+
+      ///////
+      //openGestures();
+
+      // cheking double tap
+      const touchStart = () => {
+        if (deviceType === "mobile" || deviceType === "tablet") {
+          return null;
+        }
+
+
+
+        //console.log('jsgbukjxs ',deviceType)
+        if (clickTimer == null) {
+          ///////////////////////////// now it is cheking for double click:
+          clickTimer = setTimeout(function () {
+            clickTimer = null;
+            whatTouch = 1;
+          }, 500);
+        } else {
+          clearTimeout(clickTimer);
+          clickTimer = null;
+          whatTouch = 2;
+          //control.detach ()
+        }
+
+
+
+      };
+
+      const makeInfoDOM = (artObject) => {
+        if (artObject.userData.distanceToObject === undefined) {
+          return false;
+        }
+
+        //document.getElementById("informacja").style.display = `none`;
+
+        const artObjectWorldDirection = new THREE.Vector3();
+        console.log("lll", artObject.userData)
+        artObject.getWorldDirection(artObjectWorldDirection);
+
+        if (
+          artObjectWorldDirection.z !== 1 &&
+          artObjectWorldDirection.z !== -1
+        ) {
+          artObjectWorldDirection.z = 0;
+        }
+
+        const targetStart = new THREE.Vector3();
+        const targetEnd = new THREE.Vector3();
+        const cameraStart = new THREE.Vector3();
+        const cameraEnd = new THREE.Vector3();
+        const objP = 0;
+        TWEEN.removeAll();
+
+        targetStart.copy(controls.target);
+        targetEnd.copy(artObject.position);
+        cameraStart.copy(camera.position);
+        cameraEnd.copy(artObject.position);
+
+        let distance = artObject.userData.distanceToObject;
+        "controls.maxDistance", controls.maxDistance;
+        //distance ++
+        // zmienna odleglosc okresla odleglosc od obiektu do targetu. target nigdy nie jest blizej niz odleglosc
+        //let odleglosc = 0;//0.4
+        if (artObjectWorldDirection.x != 0 && artObjectWorldDirection.z == 0) {
+          if (artObject.position.x > 0) {
+            const objP = artObject.position.x - 2 * artObject.position.x; //- odleglosc;
+            cameraEnd.x =
+              (objP + (d + distance + 1)) * artObjectWorldDirection.x;
+            targetEnd.x = (objP + (d + distance)) * artObjectWorldDirection.x;
+          } else {
+            const objP = artObject.position.x; //- odleglosc;
+            cameraEnd.x =
+              (objP + (d + distance + 1)) * artObjectWorldDirection.x;
+            targetEnd.x = (objP + (d + distance)) * artObjectWorldDirection.x;
+          }
+        } else if (
+          artObjectWorldDirection.z != 0 &&
+          artObjectWorldDirection.x == 0
+        ) {
+          if (artObject.position.z > 0) {
+            const objP = artObject.position.z - 2 * artObject.position.z; //- odleglosc;
+            cameraEnd.z =
+              (objP + (d + distance + 1)) * artObjectWorldDirection.z;
+            targetEnd.z = (objP + (d + distance)) * artObjectWorldDirection.z;
+          } else {
+            const objP = artObject.position.z; //- odleglosc;
+            cameraEnd.z = (objP + d + distance + 1) * artObjectWorldDirection.z;
+            targetEnd.z = (objP + d + distance) * artObjectWorldDirection.z;
+          }
+        }
+
+        const tweenTarget = new TWEEN.Tween(targetStart).to(targetEnd, 2000);
+        tweenTarget.onUpdate(function () {
+          controls.target.copy(targetStart);
+          const isTweenCompleted = false;
+        });
+        tweenTarget.start();
+
+        const tweenCamera = new TWEEN.Tween(cameraStart).to(cameraEnd, 2000);
+        tweenCamera.onUpdate(function () {
+          camera.position.x = cameraStart.x;
+          camera.position.z = cameraStart.z;
+        });
+        tweenCamera.start();
+
+        return true;
+      };
+
+      const makeFeedback = (paintName) => { };
+      const getCanvasRelativePosition = (event) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        return {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top
+        };
+      };
+      {
+        //////////   RENDEROWANIE
+      }
+
+      function onWindowResize() {
+        if (resizeRendererToDisplaySize(renderer)) {
+          clearPickPosition();
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+        }
+      }
+
+      // miałem wielki problem, sprawdziłem różne przykłady RESPONSE na zmiany wielkości ekranu. Najlepiej zdawał się działać przykład z threejsfundamentals.com
+      // przerobiłem cały projekt. Na pc, iphonie, było super (wcześniej nie regaowało trzeba było odświerzyać stronę)
+      // na ANDROIDZIE pixelRatio 3 , renderer zgubił proporcje, wyrenderowane obiekty przejmowały PROPORCJE EKRANU!!
+      // wyzwaniem buło: jak połączyć dwie koncepcje?
+      //rozwiązanie jest proste:
+
+      const resizeRendererToDisplaySize = (renderer) => {
+        const canvas = renderer.domElement;
+        const pixelRatio = window.devicePixelRatio;
+        const width = (canvas.clientWidth * pixelRatio) | 0; // przelicznie służy tylko do sprawdzenia czy size się zmienił.
+        const height = (canvas.clientHeight * pixelRatio) | 0;
+        const needResize = canvas.width !== width || canvas.height !== height;
+        if (needResize) {
+          renderer.setSize(canvas.clientWidth, canvas.clientHeight, false); // było: renderer.setSize(width, height, false);
+          renderer.setPixelRatio(pixelRatio); // DODANE!!!!
+          clearPickPosition();
+        }
+        return needResize;
+      };
+
+      const render = () => {
+        if (resizeRendererToDisplaySize(renderer)) {
+          clearPickPosition();
+          const canvas = renderer.domElement;
+          camera.aspect = canvas.clientWidth / canvas.clientHeight;
+          camera.updateProjectionMatrix();
+        }
+        ///////////////////////////////////////
+
+        //controls.addEventListener("change", function () {
+
+        if (clickTimer == null) {
+          //
+        }
+
+        if (scene.children !== undefined) {
+          let object1 = scene.getObjectByName("BouncingSphere");
+          object1.position.copy(controls.object.position);
+          //object1.position.y = 0.1;
+
+          let object3 = scene.getObjectByName("TargetBouncingSphere");
+          object3.position.copy(controls.target);
+          //object3.position.y = 0.1;
+
+          scene.children.forEach((mesh) => {
+            // console.log(mesh)
+
+            if (
+              mesh.type === "Mesh" &&
+              mesh.name != "BouncingSphere" &&
+              mesh.name != "Floor" &&
+
+              //mesh.name != "Sill" &&
+              mesh.name != "Sill" &&
+              mesh.name != "TargetBouncingSphere"
+            ) {
+              if (mesh.geometry.boundingBox) {
+                //const object2 = mesh;
+                //console.log(mesh, object1, object2)
+                let isCollision = detectCollisionCubes(object1, mesh);
+                if (isCollision) {
+                  // if (mesh.name === 'dzban'){ control.attach(scene.getObjectByName('dzban'));}
+                  console.log('COLIZJA! BouncingSpher', mesh.name)
+
+                  controls.target.copy(controls.target0);
+                  camera.position.copy(controls.position0);
+                }
+
+                isCollision = detectCollisionCubes(object3, mesh);
+                if (isCollision) {
+                  //if (mesh.name === 'dzban'){ control.attach(scene.getObjectByName('dzban'));}
+                  console.log('COLIZJA! argetBouncingSpher', mesh.name)
+
+                  controls.target.copy(controls.target0);
+                  camera.position.copy(controls.position0);
+                }
+              }
+            }
+          });
+        }
+        controls.saveState();
+        //});
+
+        ///////////////////////////////// CLICK & collision & info
+        const obj = scene.children.find((obj) => obj.name == "BouncingSphere");
+        newPositon.copy(controls.target);
+        newPositon.y = 0.5;
+        obj.position.copy(newPositon);
+
+        raycaster.setFromCamera(pickPosition, camera);
+        const intersects = raycaster.intersectObjects(scene.children);
+        if (intersects.length > 0) {
+          if (INTERSECTED != intersects[0].object) {
+            INTERSECTED = intersects[0].object;
+
+            switch (INTERSECTED.name) {
+              case "TargetBouncingSphere":
+                INTERSECTED = INTERSECTED0;
+
+                break;
+              default:
+                INTERSECTED0 = INTERSECTED;
+            }
+
+            if (
+              //INTERSECTED.name != "opis" &&
+              INTERSECTED.name != "BouncingSphere" &&
+              INTERSECTED.name != "TargetBouncingSphere" &&
+              INTERSECTED.name != "Sill" &&
+              INTERSECTED.name != "Floor" &&
+              INTERSECTED.name != "Wall" &&
+              INTERSECTED.name != "DirectionalLight"
+
+              // && whatTouch == 1
+            ) {
+              if (INTERSECTED.children[0]) {
+                //console.log('INTERSECTED.children[0]', INTERSECTED.children[0].name);
+              }
+              //console.log(INTERSECTED.name)
+              //console.log(INTERSECTED.userData );
+
+              clickFeedback(INTERSECTED);
+
+
+              switch (whatTouch) {
+                case 1:
+                  //
+                  //    console.log("INTERS:", intersects)
+                  break;
+                case 2:
+
+                  // console.log('iframesrc: ',control.planeIntersect)
+                  //console.log(bezruch)
+                  makeInfoDOM(INTERSECTED);
+                  document.getElementById('widget').style.display = "none";
+
+                  //openGestures(INTERSECTED.userData.iframeSrc)
+
+                  break;
+                default:
+                  INTERSECTED = null;
+                //INTERSECTED0 = INTERSECTED
+              }
+            }
+          }
+        }
+
+        whatTouch = 0;
+        INTERSECTED = null;
+        window.clearTimeout(window.timeoutID);
+        clearPickPosition();
+        controls.update();
+        TWEEN.update();
+
+        if (scene.children.length >= 1) {
+          renderer.render(scene, camera);
+        }
+
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////
+
+        requestAnimationFrame(render);
+      };
+
+      requestAnimationFrame(render);
+    }
+    {
+      //////////////////////  KONIEC MAIN()
+    }
+
+    function detectCollisionCubes(object1, object2) {
+      object1.updateMatrixWorld();
+      object2.updateMatrixWorld();
+
+      let box1 = object1.geometry.boundingSphere.clone();
+      box1.applyMatrix4(object1.matrixWorld);
+
+      let box2 = object2.geometry.boundingBox.clone();
+      box2.applyMatrix4(object2.matrixWorld);
+      return box1.intersectsBox(box2);
+    }
+
+    function onTransitionEnd(event) {
+      const element = event.target;
+      element.remove();
+    }
+
+    const clickFeedback = (intersectedObject) => {
+      if (intersectedObject.children[0]) {
+        /*
+      ////////////////// trying to vibrate
+      const canVibrate = window.navigator.vibrate
+      if (canVibrate) window.navigator.vibrate(100);
+  
+      ///////////////// playing audio CLICK:
+      const x = document.getElementById("myAudio");
+      const playAudio = () => {
+        x.play();
+      }
+      playAudio();
+  */
+        /////////////// change colour for intersectedObject
+
+        intersectedObject.material.color.addScalar(0.4);
+        const func = () => {
+          intersectedObject.material.color.setRGB(1, 1, 1);
+        };
+        setTimeout(func, 100);
+      }
+    };
+  </script>
+</body>
+
+</html>

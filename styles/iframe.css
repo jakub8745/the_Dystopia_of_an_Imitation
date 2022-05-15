@@ -1,0 +1,27 @@
+html,
+body {
+  margin: 0.5em;
+  padding: 0;
+
+  height: 100vh;
+  width: auto;
+
+  font-family: "Trebuchet", "Trebuchet MS", Helvetica, Arial, Lucida, sans-serif;
+  word-wrap: break-word;
+  border: none;
+  background-color: rgb(255, 255, 255);
+  touch-action: manipulation;
+}
+
+p {
+  font-size: 1.1em;
+  color: #333;
+}
+.text_iframe {
+  border-left-width: 1em;
+  border-left-style: solid;
+  padding-left: 1em;
+  color: #333;
+  background-color: white;
+  border-color: #82b92eed;
+}
