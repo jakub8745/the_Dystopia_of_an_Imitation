@@ -7,40 +7,6 @@
   https://tweenjs.github.io/tween.js/
 
 -->
-
-<!--Upgaded to THREEJS r134, OrbitControls 09/2021, and huge changes in code for better responsing to change of windows size-->
-<!--I got rid with IFRAME and back to DIV. I used stopImeditePropagation() and others quite randomly ;) the clue is probably in abolute relative, I haven't got enought time for disent reaserch-->
-<!---->
-
-<!--POCZET REKTORÓW PUNO
-  Wersja zaimplementowana 9/4/2021 na https://culturelab.club/blue-point-art-gallery/NorwidSketches/#
-
-Upgrade:
-        - OrbitControls now it is oryginal OC 
-        - added: feedback after cliking, sound, light effect
-        - changed info about how to control gallery.
-        - introduce different orbitControls settings for mobile 
-          device recognition
-        - no clicking on mobile, you can zoom in/out
-        111121
-        - it can be dolly/zoom.  - new setting of orbit. 
-        - fix trap effect max after zoom in. 
-        - use  of {user data} in model, get rid of array, to scene.json model distanceToArtObject was added.
-        - properties of x, z was abonded. I use getWordDirection() of artObject to set tween (camera, target)
--2021/12/09 finaly OrbitControls has been changed left button: rotate and pan forward/backward, right b: pan, scroll: dolly in/out !!!!!
--2021/12/10 first attempt to decentralize hosting
--202112/17  I use IFRAME because Orbit blocks touch events on mobiles. Use of iframe solved problem. 
-            TEXT in info iframe can be taken fron userData of artObject
-
-            20211224 - iframe "info widget " with html and counter down
-
-coming next:
-  
- - problem of double touch when moving on mobiles
-
-        RZUT Z GÓRY NA SYTUACJĘ. GRZIE ZNAJDUJE SIĘ WIDZ I OBIEKTY.
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
--->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -56,11 +22,13 @@ coming next:
 </head>
 
 <body>
-  <section id="loading-screen">
-    <img src="/textures/BluePointGallery.gif" alt="LogoBluePointArtGallery" width="10%" />
-    <b><i> Jarek Solecki </i>THE DYSTOPIA OF AN IMITATION<b /><br>
-      <a href="https://bluepointart.uk/">
-        BLUE POINT ART GALLERY</a><br />Londyn 2022<br /></section>
+   
+  <section id="loading-screen" >
+      
+  
+    
+      <div id="nowyCounterDown" class="counterDown"></div>
+      </section>
 
   <canvas id="c"></canvas>
   <div class="exhibition-name">
@@ -69,7 +37,7 @@ coming next:
     </section>
 
   </div>
-  <div class="button-container">
+  <div class="button-container" id="button-container">
     <div id="reloadButton" class="reload-button" display="block" ontouchstart="window.location.reload(false)"
       onclick="window.location.reload(false)">
       <a href="#"><img id="reload-icon" src="/textures/icons/reload.png"></a>
@@ -100,6 +68,9 @@ coming next:
 
     <a href="#" class="close-button" ontouchstart="closeButton()" onclick="closeButton()"></a>
     <script>
+ 
+
+
       const closeButton = () => {
         document.getElementById('widget').style.display = 'none';
       };
@@ -109,7 +80,7 @@ coming next:
       <iframe class="info_opis" src="project_info.html" frameborder="0" allowtransparency="true"
         title="info_opis"></iframe>
       <div class="flex-items">
-        <div id="nowyCounterDown"></div>
+          <div id="nowyCounterDown1"></div>
       </div>
 
       <div class="flex-items">
@@ -131,14 +102,9 @@ coming next:
 
   <script type="module">
     import * as THREE from 'three';
-    //import * as THREE from "https://link.eu1.storjshare.io/s/jullkb2wse7gzkwi2thwqxb6r6ra/rektorzy/build/three.min.js?download";
     import { OrbitControls } from "./jsm/controls/OrbitControls.js"; //////////////////////
     import { obrazyArray } from "/js/arrays.js";
-    //import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
-    //import { MTLLoader } from './jsm/loaders/MTLLoader.js';
-    //import { RGBELoader } from './jsm/loaders/RGBELoader.js';
-    // import { OBJLoader } from './jsm/loaders/OBJLoader.js';
-    //import { DRACOLoader } from './jsm/loaders/DRACOLoader.js'
+   
     import { TransformControls } from './jsm/controls/TransformControls.js';
     const newPositon = new THREE.Vector3();
     const pickPosition = new THREE.Vector2();
@@ -154,6 +120,8 @@ coming next:
     let whatTouch = 0;
     let cameraEnd, targetEnd;
     let control, orbit;
+
+
 
     const getDeviceType = () => {
       const ua = navigator.userAgent;
@@ -179,9 +147,10 @@ coming next:
 
     const deviceType = getDeviceType();
 
+
     const counterDownTimer = () => {
       // Set the date we're counting down to
-      var countDownDate = new Date("Mar 16, 2022 18:00:00").getTime();
+      var countDownDate = new Date("May 27, 2022 18:00:00").getTime();
 
       // Update the count down every 1 second
       var x = setInterval(function () {
@@ -202,16 +171,18 @@ coming next:
         // Output the result in an element with id="demo"
 
         //document.getElementById("nowyCounterDown").innerHTML = '<p><br>Przygotowujemy wystawę pt.: <b><i>Dialogi Vincenza — spojrzenia</i></b> <br>jest onaczęścią projektu:<i>Twórczość Stanisława Vincenza u progu XXI wieku— w ujęciu interdyscyplinarnym</i><br>Zapraszamy na wernisaż wystawy za:</p>' ""
-        document.getElementById("nowyCounterDown").innerHTML = '<p><b>Wernisaż wystawy odbędzie się już za:  ' + days + ' dni ' + hours + " godzin " + minutes + " minut i " + seconds + " sekund.";
+        document.getElementById("nowyCounterDown").innerHTML = '<p> <img class="logo" src="/textures/BluePointGallery.gif" alt="LogoBluePointArtGallery"   /><br><b><i> Jarek Solecki </i>THE DYSTOPIA OF AN IMITATION<b /><br> <a href="https://bluepointart.uk/">BLUE POINT ART GALLERY</a><br />Londyn 2022<br /><br/><b>Exhibition opens in: <br> ' + days + ' days ' + hours + " hours " + minutes + " minutes " + seconds + " seconds.";
         // If the count down is over, write some text
         if (distanceCDT < 0) {
           clearInterval(x);
-          document.getElementById("nowyCounterDown").innerHTML = "EXPIRED";
+          document.getElementById("nowyCounterDown").innerHTML = "Loading...";
+          document.getElementById("button-container").style.display= "inline-flex"
+          main();
         }
       }, 1000);
     }
-
-    main();
+     counterDownTimer()
+    
     //render()
 
     function main() {
