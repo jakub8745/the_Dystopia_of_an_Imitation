@@ -266,7 +266,7 @@
 
         const loadero = new THREE.ObjectLoader(loadingManager);
 
-        loadero.load("/models/Pitcher.json", function (objec) {
+        loadero.load("/Pitcher.json", function (objec) {
           scene.copy(objec);
           scene.children.forEach((element) => {
             if (element.type === "Mesh") {
