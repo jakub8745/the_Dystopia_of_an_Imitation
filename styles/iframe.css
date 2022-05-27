@@ -1,27 +1,31 @@
-html,
 body {
-  margin: 0.5em;
+  margin: 1vw 5vh 5vw 5vh;
   padding: 0;
 
-  height: 100vh;
-  width: auto;
+  height: 90vh;
+  width: 90vw;
 
-  font-family: "Trebuchet", "Trebuchet MS", Helvetica, Arial, Lucida, sans-serif;
+  font-family: "EB Garamond", serif;
   word-wrap: break-word;
-  border: none;
-  background-color: rgb(255, 255, 255);
+  /* kolor tekstu ramki*/
+  background-color: #e0dbcd;
   touch-action: manipulation;
+
+  position: relative;
+  border: none;
 }
 
 p {
-  font-size: 1.1em;
+  line-height: 1.6;
+  text-align: justify;
+  font-size: 1.3em;
   color: #333;
 }
-.text_iframe {
-  border-left-width: 1em;
-  border-left-style: solid;
-  padding-left: 1em;
-  color: #333;
-  background-color: white;
-  border-color: #82b92eed;
+.iframe_text {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
 }
