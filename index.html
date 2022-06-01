@@ -40,6 +40,11 @@
     <div id="infoButton" class="open-info-button" display="block">
       <a href="#"><img id="info-icon" src="/textures/icons/info.png"></a>
     </div>
+	  
+	   <div id="pdfButton" class="gizmo-button" display="block">
+      <a href="#"><img id="info-icon" src="/textures/icons/downloadPDF.png"></a>
+    </div>
+
 
     <div id="gizmoButton" class="gizmo-button" display="block">
       <a href="#"><img id="gizmo-icon" src="/textures/icons/gizmo.png"></a>
@@ -476,6 +481,7 @@
       //console.log(document.getElementById("gizmoButton"))
       document.getElementById("gizmoButton").addEventListener("click", function () { control._gizmo.visible = !control._gizmo.visible })
       document.getElementById("galleryLogoButton").addEventListener("click", function () { window.location.assign('https://bluepointart.uk/the-dystopia-of-an-imitation'); })
+      document.getElementById("pdfButton").addEventListener("click", function () { window.open('https://zenodo.org/record/6587227/files/The%20-dystopia-of%20an%20Imitation-by-Solecki-ed-by-Gorzkowicz.pdf?download=1', '_blank'); })
 
 
       /*
