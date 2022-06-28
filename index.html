@@ -153,7 +153,6 @@
 
     const getDeviceType = () => {
       const ua = navigator.userAgent;
-      //console.log(ua)
       if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
         return "tablet";
       }
@@ -211,21 +210,14 @@
     }
     counterDownTimer()
 
-    //render()
+   
 
     function main() {
       const canvas = document.querySelector("#c");
       const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-
-
-      //renderer.shadowMap.enabled = true;
-      //renderer.shadowMap.type = THREE.PCFSoftShadowMap
-
       const raycaster = new THREE.Raycaster();
       const scene = new THREE.Scene();
       const cameraWorldDir = new THREE.Vector3();
-      //const cameraEnd, cameraStart, targetEnd, targetStart;
-
       const camera = new THREE.PerspectiveCamera(
         60, // fov
         2, // aspect
@@ -241,18 +233,13 @@
       renderer.shadowMap.enabled = true;
           renderer.outputEncoding = THREE.sRGBEncoding;
           renderer.physicallyCorrectLights = true
-          //renderer.shadowMap = THREE.PCFSoftShadowMap
          renderer.toneMapping = THREE.CineonToneMapping
 
 
       const openGestures = (iframeSrc, isNotWeb) => {
         if (document.getElementsByTagName("iframe")[0].contentWindow !== undefined) {
           document.getElementById("widget").style.display = "flex";
-
-          //console.log(document.getElementsByTagName("iframe")[0].src)
-          // console.log("iframeSrc", iframeSrc)
           document.getElementsByTagName("iframe")[0].src = iframeSrc
-          //document.getElementsByClassName("info_opis").style.display = 'none';
         }
         if (isNotWeb) { counterDownTimer(); }
 
@@ -300,38 +287,15 @@
 
           control._gizmo.visible = false;
           control.setMode("rotate");
-
-
           control.attach(dzban);
           scene.add(control);
 
-        
-
-
-
-          //console.log(renderer)
-/*
-          const DirectionalLight = scene.getObjectByName(`DirectionalLight`);
-          DirectionalLight.shadow.mapSize.width = 1024; // default
-          DirectionalLight.shadow.mapSize.height = 1024;
-          */
-
           const floor = scene.getObjectByName('Floor');
           floor.material.receiveShadow = true
-
-         // let loader = new THREE.TextureLoader();
-         // loader.load("/textures/floorTexture.jpg", function (texture) {
-
-            //floor.material.map = texture;
-            floor.material.map.wrapS = THREE.RepeatWrapping;
-            floor.material.map.wrapT = THREE.RepeatWrapping;
-            floor.material.map.repeat.set(60, 60);
-
-           // floor.material.emissive.setHex(0x000000);
-            floor.material.needsUpdate = true;
-
-         // });
-         
+          floor.material.map.wrapS = THREE.RepeatWrapping;
+          floor.material.map.wrapT = THREE.RepeatWrapping;
+          floor.material.map.repeat.set(60, 60);
+          floor.material.needsUpdate = true; 
         })
       }
       ////////////////////////////////////////
@@ -339,9 +303,8 @@
 
 
       const controls = new OrbitControls(camera, renderer.domElement);
-
       control = new TransformControls(camera, renderer.domElement);
-
+	    
       switch (deviceType) {
         case "desktop":
           //openGestures();
@@ -364,10 +327,10 @@
           //controls.minZoom = 1;
           //controls.minZoom = 1;
           controls.panSpeed = 4;
-          controls.rotateSpeed = 0.4; // controls.panSpeed / 20;
+          controls.rotateSpeed = 0.4; 
           break;
         case "mobile":
-          //3alert('mobile')
+         
           controls.touches = {
             ONE: THREE.TOUCH.ROTATE,
             TWO: THREE.TOUCH.DOLLY_PAN
@@ -381,7 +344,7 @@
           controls.zoomSpeed = 1.5;
           break;
         case "tablet":
-          //alert('tablet')
+         
           controls.touches = {
             ONE: THREE.TOUCH.ROTATE,
             TWO: THREE.TOUCH.DOLLY_PAN
@@ -399,12 +362,10 @@
       controls.minPolarAngle = Math.PI / 2;
       controls.target.copy(new THREE.Vector3(-19, 6, 2.5));
       controls.object.position.copy(new THREE.Vector3(-21, 6, 2));
-      //controls.object.rotation.copy(new THREE.Vector3(-3.06,-29.11,-1.49 ))
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.autoRotate = false;
       controls.autoRotateSpeed = 0.02;
-      //controls.update();
 
       ////////////////////  Camera Bouncing Sphere
       const geometry = new THREE.SphereBufferGeometry(0.25, 8, 8); //0.5
@@ -414,9 +375,7 @@
       });
       const plane = new THREE.Mesh(geometry, material);
       plane.rotation.x = Math.PI / 2;
-      //plane.position.copy(computeSphereCenter());
       plane.position.copy(camera.position);
-      //plane.position.y = 0.1;
       plane.material.visible = false;
       plane.name = "BouncingSphere";
       plane.geometry.computeBoundingSphere();
@@ -432,27 +391,18 @@
       const Tplane = new THREE.Mesh(Tgeometry, Tmaterial);
       Tplane.rotation.x = Math.PI / 2;
       Tplane.position.copy(controls.target);
-      //Tplane.position.y = 0.1;
       Tplane.material.visible = false;
       Tplane.name = "TargetBouncingSphere";
       Tplane.geometry.computeBoundingSphere();
       scene.add(Tplane);
       /////////////////////////////////////
-      /*
-        camera.matrix.extractBasis(ignore1, ignore2, front_vector);
-        //put the camera at a negative distance from the object.
-        camera.position.copy(controls.target);
-        camera.position.addScaledVector(front_vector, distance);
-    */
+    
       const setPickPosition = (event) => {
         let pos = getCanvasRelativePosition(event);
         pickPosition.x = (pos.x / renderer.domElement.clientWidth) * 2 - 1;
         pickPosition.y = (pos.y / renderer.domElement.clientHeight) * -2 + 1; // note we flip Y
 
-
         touchStart();
-
-
       };
 
       const clearPickPosition = () => {
@@ -464,15 +414,9 @@
       window.addEventListener("message", (event) => {
         if (event.origin !== "https://e6pnh.csb.app")
           return;
-        // console.log("originevent.", event.data)
 
         if (event.data == "closeInfo") {
-          // console.log("trzeba zamknąć to okno")
-
           document.getElementById("widget").style.display = "none";
-
-          //const frame = document.getElementById("widget");
-          //frame.parentNode.removeChild(frame);
         }
         // ...
       }, false);
@@ -488,32 +432,11 @@
           openGestures("project_info.html", false)
 
         });
-
-
-
-      //console.log(document.getElementById("gizmoButton"))
+	    
       document.getElementById("gizmoButton").addEventListener("click", function () { control._gizmo.visible = !control._gizmo.visible })
       document.getElementById("galleryLogoButton").addEventListener("click", function () { window.location.assign('https://bluepointart.uk/the-dystopia-of-an-imitation'); })
       document.getElementById("pdfButton").addEventListener("click", function () { window.open('https://zenodo.org/record/6633680/files/Dystopia-of-an-Imitation-%20Solecki-Gorzkowicz%20%28ed%29.pdf?download=1', '_blank'); })
 
-
-      /*
-document
-        .getElementById("infoButton")
-        .addEventListener("click", openGestures);
-      document
-        .getElementById("infoButton")
-        .addEventListener("touchstart", openGestures);
-
-
-
-            const openGesturesX = () => {
-              //console.log('nowe współrzędne')
-              //controls.target.copy(new THREE.Vector3(0,1.4,0));
-              // controls.object.position.copy(new THREE.Vector3(1,1.4,1.5));
-            };
-            */
-      //window.addEventListener("load", openGestures);
       window.addEventListener("click", setPickPosition);
       window.addEventListener("mouseout", clearPickPosition);
       window.addEventListener("mouseleave", clearPickPosition);
@@ -532,9 +455,7 @@ document
 
       window.addEventListener("touchend", clearPickPosition);
 
-
       controls.addEventListener("end", function () {
-        //let bezruch = true
         if (
           document.getElementById("widget").style.display !== "none" &&
           isTweenCompleted === true
@@ -547,7 +468,6 @@ document
 
 
       ////////////
-      //control.addEventListener("change", function () { console.log(control.getRaycaster()) });
 
       control.addEventListener("dragging-changed", function (event) {
         controls.enabled = !event.value;
@@ -555,7 +475,6 @@ document
       ///////
 
       window.addEventListener("keydown", function (event) {
-        console.log("event", event)
         switch (event.keyCode) {
           case 77: // M -- move
             control.setMode("translate");
@@ -590,7 +509,6 @@ document
 
 
       ///////
-      //openGestures();
 
       // cheking double tap
       const touchStart = () => {
@@ -600,7 +518,6 @@ document
 
 
 
-        //console.log('jsgbukjxs ',deviceType)
         if (clickTimer == null) {
           ///////////////////////////// now it is cheking for double click:
           clickTimer = setTimeout(function () {
@@ -611,11 +528,7 @@ document
           clearTimeout(clickTimer);
           clickTimer = null;
           whatTouch = 2;
-          //control.detach ()
         }
-
-
-
       };
       const callback = () => {
         console.log("camera.position", camera.position)
@@ -713,8 +626,6 @@ document
         }
         ///////////////////////////////////////
 
-        //controls.addEventListener("change", function () {
-
         if (clickTimer == null) {
           //
         }
@@ -726,10 +637,8 @@ document
 
           let object3 = scene.getObjectByName("TargetBouncingSphere");
           object3.position.copy(controls.target);
-          //object3.position.y = 0.1;
 
           scene.children.forEach((mesh) => {
-            // console.log(mesh)
 
             if (
               mesh.type === "Mesh" &&
@@ -741,22 +650,14 @@ document
               mesh.name != "TargetBouncingSphere"
             ) {
               if (mesh.geometry.boundingBox) {
-                //const object2 = mesh;
-                //console.log(mesh, object1, object2)
                 let isCollision = detectCollisionCubes(object1, mesh);
                 if (isCollision) {
-                  // if (mesh.name === 'dzban'){ control.attach(scene.getObjectByName('dzban'));}
-                  console.log('COLIZJA! camera BouncingSpher', mesh.name)
-                  console.log(TWEEN)
-                  //TWEEN.removeAll()
                   controls.target.copy(controls.target0);
                   camera.position.copy(controls.position0);
                 }
 
                 isCollision = detectCollisionCubes(object3, mesh);
                 if (isCollision) {
-                  //if (mesh.name === 'dzban'){ control.attach(scene.getObjectByName('dzban'));}
-                  console.log('COLIZJA! argetBouncingSpher', mesh.name)
                   TWEEN.removeAll()
                   controls.target.copy(controls.target0);
                   camera.position.copy(controls.position0);
@@ -790,44 +691,32 @@ document
             }
 
             if (
-              //INTERSECTED.name != "opis" &&
               INTERSECTED.name != "BouncingSphere" &&
               INTERSECTED.name != "TargetBouncingSphere" &&
               INTERSECTED.name != "Sill" &&
               INTERSECTED.name != "Floor" &&
               INTERSECTED.name != "Wall" &&
               INTERSECTED.name != "DirectionalLight"
-
-              // && whatTouch == 1
             ) {
               if (INTERSECTED.children[0]) {
-                console.log('INTERSECTED.children[0]', INTERSECTED.children[0].name);
+                //console.log('INTERSECTED.children[0]', INTERSECTED.children[0].name);
               }
-              //console.log(INTERSECTED.name)
-              //console.log(INTERSECTED.userData );
-
               clickFeedback(INTERSECTED);
-
 
               switch (whatTouch) {
                 case 1:
 
                   //
-                  //    console.log("INTERS:", intersects)
                   break;
                 case 2:
 
-                  // console.log('iframesrc: ',control.planeIntersect)
-                  console.log(INTERSECTED.userData)
                   makeInfoDOM(INTERSECTED);
                   document.getElementById('widget').style.display = "none";
 
-                  //openGestures(INTERSECTED.userData.iframeSrc)
 
                   break;
                 default:
                   INTERSECTED = null;
-                //INTERSECTED0 = INTERSECTED
               }
             }
           }
@@ -876,18 +765,7 @@ document
 
     const clickFeedback = (intersectedObject) => {
       if (intersectedObject.children[0]) {
-        /*
-      ////////////////// trying to vibrate
-      const canVibrate = window.navigator.vibrate
-      if (canVibrate) window.navigator.vibrate(100);
-  
-      ///////////////// playing audio CLICK:
-      const x = document.getElementById("myAudio");
-      const playAudio = () => {
-        x.play();
-      }
-      playAudio();
-  */
+     
         /////////////// change colour for intersectedObject
 
         intersectedObject.material.color.addScalar(0.4);
